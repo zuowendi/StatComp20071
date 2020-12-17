@@ -1,0 +1,96 @@
+---
+title: "Introduction to KNN&LDA"
+author: "Zuo Wendi"
+date: "2020-12-09"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to StatComp20071}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Overview
+
+__StatComp2071__ is a simple R package developed to predict the label of the 
+test set.There two methods called KNN and LDA.
+
+## Basic theory of KNN&LDA
+
+KNN is a lazy-learning method.You only need to find k data that nearest to the data you are going to predict.Let k data vote and you will get the label that have the most votes.
+
+LDA put all data into a line, letting the data with same labels nearer and the distance between data with different labels larger.According to the position of the test data on the line, you will get the labels.
+
+## How to use _myKNN_ and _myLDA_
+
+The source R code for myKNN is as follows:
+
+```{r}
+myKNN <- function(train_x, train_y,test_x, k = 5){
+  test_size = dim(test_x)[1]
+  size = dim(train_x)[1]
+  
+  # 1.计算两个矩阵每个的距离
+  l2_distance = -2 * test_x %*% t(train_x) +
+    matrix(rep(rowSums(train_x^2), test_size), nrow = test_size, byrow = TRUE)+
+    matrix(rep(rowSums(test_x^2), size), nrow = test_size)
+  
+  # 2.定义函数排序
+  top_k <- function(test1,top_k = k){
+    order_dist = order(test1, decreasing = F)[1:top_k]
+    return(names(sort(table(train_y[order_dist]),decreasing = T)[1]))
+  }
+  
+  # 3.预测结果
+  yy_pred = as.vector(apply(l2_distance, MARGIN = 1, FUN = top_k))
+  return(yy_pred)
+}
+```
+
+The source R code for myLDA is as follows:
+```{r}
+myLDA <- function(train_X, train_y, test_x){
+  y = train_y
+  X1 = train_X[train_y==1, ]
+  X2 = train_X[train_y==0, ]
+  
+  pi1 <- mean(y)
+  n1 <- sum(y)
+  n2 <- sum(y == 0)
+  pi2 <- 1 - mean(y)
+  
+  mu1 <- apply(X1, 2, mean)
+  
+  mu2 <- apply(X2, 2, mean)
+  mu_1and2 <- (mu1 + mu2) / 2
+  
+  x_mu1 <- sweep(X1 ,2, mu1)
+  x_mu2 <- sweep(X2 ,2, mu2)
+  
+  sigma1 <- t(x_mu1) %*% x_mu1 / n1
+  sigma2 <- t(x_mu2) %*% x_mu2 / n2
+  sigma_merge <- (n1-1) * sigma1/(n1 + n2-2) + (n2-1) * sigma2/(n1 + n2 - 2)
+  
+  if(length(test_x) > 1){
+    test_mu1andm2 <- sweep(test_x ,2, mu_1and2)
+  }else{
+    test_mu1andm2 <-test_x - mu_1and2
+  }
+  y_hat <- test_mu1andm2 %*% solve(sigma_merge) %*% (mu1 - mu2) + log(n1/n2)
+  y_pred <- ifelse(y_hat > 0, 1, 0)
+  return(list('yhat' = y_hat, 'ypred' = y_pred))
+}
+```
+An example for using _myKNN_ and _myLDA_:
+```{r}
+data(iris)
+X = as.matrix(subset(iris,Species == "setosa" | Species == "versicolor")[1:4])
+y = append(rep(0,50), rep(1,50))
+
+### knn
+ypred1 <- myKNN(X, y,test_x = X, k = 5)
+table(ypred1, y)
+
+### lda
+ypred2 <- myLDA(X, y,test_x = X)
+table(ypred2$ypred, y)
+```

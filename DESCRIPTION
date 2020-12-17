@@ -1,0 +1,17 @@
+Package: StatComp20071
+Type: Package
+Title: The final project for 'Statistical Computing' course
+Version: 1.0
+Date: 2020-12-09
+Author: Zuo Wendi
+Maintainer: Zuo Wendi <zuowendi@mail.ustc.edu.cn>
+Description: KNN and LDA R function and homework.
+License: GPL (>= 2)
+Imports: Rcpp (>= 0.12.16), microbenchmark, knitr, rmarkdown, Ball, DAAG, RANN, boot,bootstrap, energy, lattice
+LinkingTo: Rcpp
+Depends: R(>= 3.6.0)
+RoxygenNote: 7.1.1
+Encoding: UTF-8
+VignetteBuilder: knitr
+URL: http://github.com/zuowendi/StatComp20071
+BugReports: http://github.com/zuowendi/StatComp/issues
